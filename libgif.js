@@ -438,6 +438,7 @@
 
         var loadError = null;
         var loading = false;
+        var onErrorCallback = null;
 
         var transparency = null;
         var delay = null;
@@ -585,6 +586,8 @@
             }; // Fake header.
             frames = [];
             drawError();
+
+            onErrorCallback && onErrorCallback(loadError, options.gif);
         };
 
         var doHdr = function (_hdr) {
@@ -985,6 +988,9 @@
             },
             load: function (callback) {
                 this.load_url(gif.getAttribute('rel:animated_src') || gif.src,callback);
+            },
+            onError: function (callback) {
+                onErrorCallback = (callback && callback.bind(this)) || null;
             },
             load_raw: function(arr, callback) {
                 if (!load_setup(callback)) return;
