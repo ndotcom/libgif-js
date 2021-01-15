@@ -446,6 +446,8 @@
         var lastDisposalMethod = null;
         var frame = null;
         var lastImg = null;
+        var iterationCount = 0; // 이미지 기본 카운트 저장
+        var currentIterationCount = 0; // 현재 재생 반복수
 
         var playing = true;
         var forward = true;
@@ -461,7 +463,7 @@
 
         var onEndListener = (options.hasOwnProperty('on_end') ? options.on_end : null);
         var loopDelay = (options.hasOwnProperty('loop_delay') ? options.loop_delay : 0);
-        var overrideLoopMode = (options.hasOwnProperty('loop_mode') ? options.loop_mode : 'auto');
+        var overrideLoopMode = (options.hasOwnProperty('loop_mode') ? options.loop_mode : true);
         var drawWhileLoading = (options.hasOwnProperty('draw_while_loading') ? options.draw_while_loading : true);
         var showProgressBar = drawWhileLoading ? (options.hasOwnProperty('show_progress_bar') ? options.show_progress_bar : true) : false;
         var progressBarHeight = (options.hasOwnProperty('progressbar_height') ? options.progressbar_height : 25);
@@ -690,7 +692,6 @@
 
         var player = (function () {
             var i = -1;
-            var iterationCount = 0;
 
             var showingInfo = false;
             var pinned = false;
@@ -716,9 +717,11 @@
                 var completeLoop = function () {
                     if (onEndListener !== null)
                         onEndListener(gif);
-                    iterationCount++;
+                    currentIterationCount++;
 
-                    if (overrideLoopMode !== false || iterationCount < 0) {
+                    console.log(currentIterationCount, iterationCount)
+
+                    if (overrideLoopMode === true || currentIterationCount < iterationCount) {
                         doStep();
                     } else {
                         stepping = false;
@@ -776,6 +779,13 @@
                 playing = false;
             };
 
+            var stop = function(){
+                playing = false;
+                i = 0;
+                putFrame();
+                currentIterationCount = 0;
+            };
+
 
             return {
                 init: function () {
@@ -831,8 +841,10 @@
             com: withProgress(doNothing),
             // I guess that's all for now.
             app: {
-                // TODO: Is there much point in actually supporting iterations?
-                NETSCAPE: withProgress(doNothing)
+                NETSCAPE: function(block){
+                    iterationCount = block.iterations || 0;
+                    withProgress(doNothing);
+                }
             },
             img: withProgress(doImg, true),
             eof: function (block) {
